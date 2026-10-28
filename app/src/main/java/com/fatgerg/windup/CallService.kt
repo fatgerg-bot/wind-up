@@ -89,13 +89,36 @@ class CallService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun currentPrank(): Prank = Prank(
-        character = Characters.byId(this, settings.characterId),
-        friendName = settings.friendName.trim(),
-        details = settings.friendDetails.trim(),
-        myName = settings.myName.trim(),
-        maxTurns = settings.maxTurns.coerceIn(2, 20),
-    )
+    private fun currentPrank(reason: Reason? = null): Prank {
+        val c = Characters.byId(this, settings.characterId)
+        return Prank(
+            character = c,
+            reason = reason ?: c.reasons.first(),
+            friendName = settings.friendName.trim(),
+            details = settings.friendDetails.trim(),
+            myName = settings.myName.trim(),
+            maxTurns = settings.maxTurns.coerceIn(2, 20),
+            silliness = settings.silliness,
+        )
+    }
+
+    /** Picks why the character is ringing this time, asking Claude for a new reason if that's the pick. */
+    private fun chooseReason(): Prank {
+        val c = Characters.byId(this, settings.characterId)
+        val picked = Characters.pickReason(c, settings.reasonFor(c.id), settings.lastReasonFor(c.id), settings.silliness)
+        if (picked.id != Characters.INVENT) return currentPrank(picked)
+        CallState.add(Who.APP, "Making up a brand-new reason to ring…")
+        val draft = currentPrank(Reason(Characters.INVENT, "Something new", "", ""))
+        val invented = try {
+            Characters.parseInvented(brain.oneShot(Characters.inventPrompt(this, draft), "Invent the call."))
+        } catch (e: Exception) {
+            null
+        }
+        if (invented != null) return draft.copy(reason = invented)
+        CallState.add(Who.APP, "Couldn't invent one, using a usual reason instead")
+        val fallback = c.reasons.filter { it.id != settings.lastReasonFor(c.id) }.ifEmpty { c.reasons }.random()
+        return currentPrank(fallback)
+    }
 
     // ---- Before the call ------------------------------------------------------------------
 
@@ -106,8 +129,6 @@ class CallService : Service() {
         CallState.setStatus(Status.PREPARING)
         acquireWakeLock()
         scope.launch(worker) {
-            val p = currentPrank()
-            prank = p
             revealed = false
             finished = false
             replies = 0
@@ -117,8 +138,11 @@ class CallService : Service() {
                 failPrepare("No Claude API key yet. Add it in Settings.")
                 return@launch
             }
+            val p = chooseReason()
+            prank = p
+            settings.setLastReasonFor(p.character.id, p.reason.id)
             if (p.friendName.isBlank()) CallState.add(Who.APP, "Tip: add your friend's name, it makes the joke land.")
-            CallState.add(Who.APP, "${p.character.name} is getting ready")
+            CallState.add(Who.APP, "${p.character.name} is getting ready. This time: ${p.reason.title}")
             try {
                 if (transcriber == null) {
                     CallState.add(Who.APP, "Loading speech recognition…")

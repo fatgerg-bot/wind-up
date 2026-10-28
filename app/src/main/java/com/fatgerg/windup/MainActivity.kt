@@ -45,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -164,6 +165,16 @@ class MainActivity : ComponentActivity() {
         val log by CallState.log.collectAsState()
         LaunchedEffect(Unit) { if (!settings.googleOn) loadPhoneVoices() }
         val character = characters.firstOrNull { it.id == charId } ?: characters.first()
+        var reasonId by remember(charId) { mutableStateOf(settings.reasonFor(charId)) }
+        var silly by remember { mutableStateOf(settings.silliness.toFloat()) }
+        val sillyNames = remember { Characters.sillinessNames(this@MainActivity) }
+
+        /** A sample prank for the Hear buttons: the chosen reason, or the first one on a surprise. */
+        fun preview(): Prank = Prank(
+            character,
+            character.reasons.firstOrNull { it.id == reasonId } ?: character.reasons.first(),
+            friend.trim(), details.trim(), me.trim(), settings.maxTurns, silly.toInt(),
+        )
 
         fun saveForm() {
             settings.characterId = character.id
@@ -171,6 +182,7 @@ class MainActivity : ComponentActivity() {
             settings.friendDetails = details
             settings.myName = me
             turns.toIntOrNull()?.let { settings.maxTurns = it.coerceIn(2, 20) }
+            settings.silliness = silly.toInt()
         }
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -190,6 +202,30 @@ class MainActivity : ComponentActivity() {
                 Spacer(Modifier.width(12.dp))
                 Text(character.voiceDesign, color = Muted, fontSize = 13.sp)
             }
+
+            Label("Why they're ringing")
+            Picker(
+                current = character.reasons.firstOrNull { it.id == reasonId }?.title ?: "Surprise me (different every call)",
+                options = listOf("" to "Surprise me (different every call)") + character.reasons.map { it.id to it.title },
+                onPick = { id ->
+                    reasonId = id
+                    settings.setReasonFor(character.id, id)
+                },
+            )
+
+            Label("How silly: ${sillyNames.getOrElse(silly.toInt() - 1) { "" }}")
+            Slider(
+                value = silly,
+                onValueChange = { silly = it },
+                onValueChangeFinished = { settings.silliness = silly.toInt() },
+                valueRange = 1f..5f,
+                steps = 3,
+            )
+            Text(
+                if (silly >= 4f) "At this level they'll sometimes make up a completely new reason to ring."
+                else "Higher means more random and ridiculous.",
+                color = Muted, fontSize = 12.sp,
+            )
 
             Label("Voice")
             if (!settings.googleOn) {
@@ -212,8 +248,7 @@ class MainActivity : ComponentActivity() {
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
-                        val p = Prank(character, friend.trim(), details.trim(), me.trim(), settings.maxTurns)
-                        phoneVoice?.preview(phoneChoice, Characters.openingLine(p), character.speakingRate, character.phonePitch)
+                        phoneVoice?.preview(phoneChoice, Characters.openingLine(preview()), character.speakingRate, character.phonePitch)
                     }) { Text("Hear it") }
                 }
             } else {
@@ -241,8 +276,7 @@ class MainActivity : ComponentActivity() {
                 OutlinedButton(onClick = {
                     if (!hasMic()) { requestBasics(); return@OutlinedButton }
                     saveForm()
-                    val p = Prank(character, friend.trim(), details.trim(), me.trim(), settings.maxTurns)
-                    send(CallService.ACTION_HEAR_VOICE, Characters.openingLine(p))
+                    send(CallService.ACTION_HEAR_VOICE, Characters.openingLine(preview()))
                 }, modifier = Modifier.weight(1f)) { Text("Hear the opening") }
                 OutlinedButton(onClick = {
                     if (!hasMic()) { requestBasics(); return@OutlinedButton }

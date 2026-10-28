@@ -37,6 +37,33 @@ class Brain(private val settings: Settings) {
         }
     }
 
+    /** A single question to Claude outside the call, e.g. inventing a new reason to ring. */
+    fun oneShot(systemPrompt: String, question: String, maxTokens: Int = 400): String {
+        val body = JSONObject()
+            .put("model", settings.model)
+            .put("max_tokens", maxTokens)
+            .put("system", systemPrompt)
+            .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", question)))
+        val request = Request.Builder()
+            .url("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", settings.claudeKey)
+            .header("anthropic-version", "2023-06-01")
+            .header("content-type", "application/json")
+            .post(body.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+        http.newCall(request).execute().use { resp ->
+            val raw = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) throw RuntimeException("Claude API ${resp.code}")
+            val content = JSONObject(raw).getJSONArray("content")
+            val text = StringBuilder()
+            for (i in 0 until content.length()) {
+                val block = content.getJSONObject(i)
+                if (block.optString("type") == "text") text.append(block.optString("text"))
+            }
+            return text.toString()
+        }
+    }
+
     /** Sends what the friend said (plus any app note) and returns the character's spoken reply. */
     fun reply(input: String): String {
         addUser(input)

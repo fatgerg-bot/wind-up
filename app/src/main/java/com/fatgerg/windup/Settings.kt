@@ -44,6 +44,19 @@ class Settings(context: Context) {
         get() = str("my_name", "Greg")
         set(v) = putStr("my_name", v.trim())
 
+    /** 1 (believable) to 5 (bonkers). */
+    var silliness: Int
+        get() = prefs.getInt("silliness", 3)
+        set(v) = prefs.edit().putInt("silliness", v.coerceIn(1, 5)).apply()
+
+    /** The reason chosen for a character's next call, or "" for a surprise. */
+    fun reasonFor(characterId: String): String = str("reason_$characterId")
+    fun setReasonFor(characterId: String, id: String) = putStr("reason_$characterId", id)
+
+    /** The reason used last time, so a surprise is never the same twice running. */
+    fun lastReasonFor(characterId: String): String = str("last_reason_$characterId")
+    fun setLastReasonFor(characterId: String, id: String) = putStr("last_reason_$characterId", id)
+
     /** Roughly how many AI replies before the reveal. */
     var maxTurns: Int
         get() = prefs.getInt("max_turns", 6)

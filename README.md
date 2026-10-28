@@ -88,7 +88,16 @@ While a call is running:
 
 ## The characters
 
-All six live in `app/src/main/assets/characters.json`. Edit that file to change a character, or add a new one with the same fields. Each character has an opening line, running gags and an escalation that ends in the reveal, plus:
+### Different every call
+
+Each character has a personality that stays the same, plus four or five **reasons for ringing**, one of them a wrong number. On the main screen, **Why they're ringing** is set to *Surprise me* by default: a different reason each call, never the same one twice running. You can also pick a particular reason.
+
+**How silly** goes from 1 (Believable) to 5 (Bonkers). Higher levels give more random tangents and ridiculous twists. At 4 or 5, about one call in three gets a reason Claude makes up on the spot, so you'll get calls nobody has written.
+
+Jesus is kind and calm, speaking from a Jehovah's Witness understanding of the Bible. He rings because he's noticed someone could do with a good chat, or about shelves, a picnic for five thousand, a lost sheep, or a wrong number. He never preaches or judges, and if someone shares something painful he takes it seriously and hands over to you.
+
+
+All seven live in `app/src/main/assets/characters.json`. Edit that file to change a character, or add a new one with the same fields. Each character has an opening line, running gags and an escalation that ends in the reveal, plus:
 
 - `google_voice`: the Chirp 3 HD voice, such as Puck or Gacrux
 - `speaking_rate`: 1.0 is normal speed
@@ -103,6 +112,7 @@ All six live in `app/src/main/assets/characters.json`. Edit that file to change 
 | Reginald the Butler | Iapetus (clear), slowed down |
 | Inspector Crumb, Garden Gnome Recovery Unit | Algenib (gravelly) |
 | Gary from Total Broadband Solutions | Schedar (even) |
+| Jesus | Achird (friendly), slowed down |
 
 ## Artwork
 
