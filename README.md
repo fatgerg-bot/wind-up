@@ -20,7 +20,7 @@ Both keys are typed into **Settings** and stay on the phone. They never go in th
 
 **Claude (the jokes):** your Claude API key from console.anthropic.com. Each call costs a penny or two.
 
-**Google (the voices):** a Google Cloud Text-to-Speech API key. Without one, the app uses the phone's own voice.
+**Google (the voices):** a Google Cloud Text-to-Speech API key. In **Settings → Voices** you can switch between Google's voices and the phone's own text-to-speech voices. With the phone's voices, each character gets its own pick from the voices installed on the phone (British, Irish, Australian and so on), and **Get more phone voices and accents** opens Android's voice settings to download more. Without a Google key, the app always uses the phone's voices.
 
 1. Go to console.cloud.google.com and create a project, for example "wind-up".
 2. Turn on billing for the project. Google needs a card even for the free tier. The first million characters a month are free, which is about a thousand minutes of speech.

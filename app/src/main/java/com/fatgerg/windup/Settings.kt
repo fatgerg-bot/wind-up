@@ -49,9 +49,21 @@ class Settings(context: Context) {
         get() = prefs.getInt("max_turns", 6)
         set(v) = prefs.edit().putInt("max_turns", v).apply()
 
+    /** True: Google's voices (needs the Google key). False: the phone's own text-to-speech voices. */
+    var useGoogleVoices: Boolean
+        get() = prefs.getBoolean("use_google", true)
+        set(v) = prefs.edit().putBoolean("use_google", v).apply()
+
+    /** Google voices are used only when chosen in Settings AND there's a key. */
+    val googleOn: Boolean get() = useGoogleVoices && googleKey.isNotBlank()
+
     /** A chosen Google voice for one character, or "" to use the character's own. */
     fun voiceFor(characterId: String): String = str("voice_$characterId")
     fun setVoiceFor(characterId: String, voice: String) = putStr("voice_$characterId", voice)
+
+    /** A chosen phone voice for one character, or "" for the phone's first British voice. */
+    fun phoneVoiceFor(characterId: String): String = str("phone_voice_$characterId")
+    fun setPhoneVoiceFor(characterId: String, voice: String) = putStr("phone_voice_$characterId", voice)
 
     // ---- Line levels ----
 

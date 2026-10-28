@@ -67,6 +67,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import kotlin.concurrent.thread
 
 private val Plum = Color(0xFF1B1530)
 private val Card = Color(0xFF2A2147)
@@ -78,6 +79,21 @@ private val Muted = Color(0xFFA99FC7)
 
 class MainActivity : ComponentActivity() {
     private lateinit var settings: Settings
+    private var phoneVoice: PhoneVoice? = null
+    private val phoneVoices = mutableStateOf<List<Pair<String, String>>>(emptyList())
+
+    /** Loads the phone's own voices for the drop-down, once. */
+    private fun loadPhoneVoices() {
+        if (phoneVoice != null) return
+        val v = PhoneVoice(this).also { it.init() }
+        phoneVoice = v
+        thread { if (v.awaitReady()) phoneVoices.value = v.labelledVoices() }
+    }
+
+    override fun onDestroy() {
+        phoneVoice?.shutdown()
+        super.onDestroy()
+    }
 
     private val askPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
@@ -143,7 +159,10 @@ class MainActivity : ComponentActivity() {
         var me by remember { mutableStateOf(settings.myName) }
         var turns by remember { mutableStateOf(settings.maxTurns.toString()) }
         var voice by remember { mutableStateOf(settings.voiceFor(settings.characterId)) }
+        var phoneChoice by remember { mutableStateOf(settings.phoneVoiceFor(settings.characterId)) }
+        val phoneList by phoneVoices
         val log by CallState.log.collectAsState()
+        LaunchedEffect(Unit) { if (!settings.googleOn) loadPhoneVoices() }
         val character = characters.firstOrNull { it.id == charId } ?: characters.first()
 
         fun saveForm() {
@@ -163,6 +182,7 @@ class MainActivity : ComponentActivity() {
                     charId = id
                     settings.characterId = id
                     voice = settings.voiceFor(id)
+                    phoneChoice = settings.phoneVoiceFor(id)
                 },
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
@@ -172,9 +192,30 @@ class MainActivity : ComponentActivity() {
             }
 
             Label("Voice")
-            if (settings.googleKey.isBlank()) {
-                Text("Using the phone's own voice. Add a Google key in Settings for the realistic voices.",
-                    color = Sun, fontSize = 12.sp)
+            if (!settings.googleOn) {
+                Text(
+                    if (settings.useGoogleVoices) "Using the phone's own voices until you add a Google key in Settings."
+                    else "Using the phone's own voices. Switch to Google's in Settings.",
+                    color = Sun, fontSize = 12.sp,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) {
+                        Picker(
+                            current = if (phoneList.isEmpty()) "Loading voices…"
+                                else phoneList.firstOrNull { it.first == phoneChoice }?.second ?: "Phone's first British voice",
+                            options = listOf("" to "Phone's first British voice") + phoneList,
+                            onPick = { v ->
+                                phoneChoice = v
+                                settings.setPhoneVoiceFor(character.id, v)
+                            },
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        val p = Prank(character, friend.trim(), details.trim(), me.trim(), settings.maxTurns)
+                        phoneVoice?.preview(phoneChoice, Characters.openingLine(p), character.speakingRate, character.phonePitch)
+                    }) { Text("Hear it") }
+                }
             } else {
                 val own = GoogleVoice.ALL.firstOrNull { it.first == character.googleVoice }
                 Picker(
@@ -335,6 +376,7 @@ class MainActivity : ComponentActivity() {
         var claudeKey by remember { mutableStateOf(settings.claudeKey) }
         var model by remember { mutableStateOf(settings.model) }
         var googleKey by remember { mutableStateOf(settings.googleKey) }
+        var useGoogle by remember { mutableStateOf(settings.useGoogleVoices) }
         var eot by remember { mutableStateOf(settings.endOfTurnSeconds.toString()) }
         var threshold by remember { mutableStateOf(settings.talkThreshold.toString()) }
         var outLevel by remember { mutableStateOf(settings.outputLevel.toString()) }
@@ -346,6 +388,7 @@ class MainActivity : ComponentActivity() {
             settings.claudeKey = claudeKey
             settings.model = model
             settings.googleKey = googleKey
+            settings.useGoogleVoices = useGoogle
             eot.toFloatOrNull()?.let { settings.endOfTurnSeconds = it.coerceIn(0.3f, 3f) }
             threshold.toIntOrNull()?.let { settings.talkThreshold = it.coerceIn(1, 90) }
             outLevel.toIntOrNull()?.let { settings.outputLevel = it.coerceIn(10, 100) }
@@ -368,10 +411,26 @@ class MainActivity : ComponentActivity() {
             Field("Claude API key (stays on this phone)", claudeKey, { claudeKey = it }, secret = true)
             Field("Model", model, { model = it })
 
-            Section("Google (the voices)")
+            Section("Voices")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(if (useGoogle) "Google's voices" else "The phone's own voices", color = Color.White)
+                    Text(
+                        if (useGoogle) "Realistic, needs the key below. Free for about 1,000 minutes a month."
+                        else "Free and offline, more robotic. Pick one per character on the main screen.",
+                        color = Muted, fontSize = 12.sp,
+                    )
+                }
+                Switch(checked = useGoogle, onCheckedChange = { useGoogle = it })
+            }
             Field("Google Cloud Text-to-Speech API key", googleKey, { googleKey = it }, secret = true)
-            Text("Leave it empty to use the phone's own voice. The first million characters a month are free.",
-                color = Muted, fontSize = 12.sp)
+            OutlinedButton(onClick = {
+                try {
+                    startActivity(Intent("com.android.settings.TTS_SETTINGS"))
+                } catch (_: Exception) {
+                    startActivity(Intent(AndroidSettings.ACTION_SETTINGS))
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Get more phone voices and accents") }
 
             Section("Call line levels")
             Field("Character's volume into the call phone, 10-100", outLevel, { outLevel = it }, number = true)

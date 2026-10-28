@@ -98,19 +98,56 @@ class PhoneVoice(private val context: Context) {
         return ok
     }
 
-    private fun britishVoice(t: TextToSpeech): Voice? = try {
-        t.voices.orEmpty()
-            .filter { it.locale.language == "en" && it.locale.country == "GB" }
-            .filter { !it.isNetworkConnectionRequired }
-            .filter { !it.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) }
-            .minByOrNull { it.name }
-    } catch (_: Exception) { null }
+    /** Every downloaded English voice on the phone, British first. */
+    fun englishVoices(): List<Voice> {
+        val t = tts ?: return emptyList()
+        return try {
+            val en = t.voices.orEmpty()
+                .filter { it.locale.language == "en" }
+                .filter { !it.isNetworkConnectionRequired }
+            // Voices listed but not downloaded fall back to the default voice, so they'd all sound the same.
+            val installed = en.filter {
+                !it.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
+            }
+            installed.ifEmpty { en }
+                .sortedWith(compareBy<Voice>({ countryOrder(it.locale.country) }, { it.name }))
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
 
-    fun synth(text: String, rate: Float, pitch: Float): Pcm? {
+    /** The phone's voices with friendly labels like "British 2" or "Irish 1", for the drop-down. */
+    fun labelledVoices(): List<Pair<String, String>> {
+        val counts = HashMap<String, Int>()
+        return englishVoices().map { v ->
+            val accent = accentName(v.locale.country)
+            val n = (counts[accent] ?: 0) + 1
+            counts[accent] = n
+            v.name to "$accent $n"
+        }
+    }
+
+    /** Plays a voice straight out of the phone, for choosing one. */
+    fun preview(voiceName: String, text: String, rate: Float, pitch: Float) {
+        val t = tts ?: return
+        t.setLanguage(Locale.UK)
+        pick(voiceName)?.let { t.setVoice(it) }
+        t.setSpeechRate(rate)
+        t.setPitch(pitch)
+        t.speak(text, TextToSpeech.QUEUE_FLUSH, null, "preview")
+    }
+
+    private fun pick(voiceName: String): Voice? {
+        val all = englishVoices()
+        return all.firstOrNull { it.name == voiceName } ?: all.firstOrNull { it.locale.country == "GB" } ?: all.firstOrNull()
+    }
+
+    /** [voiceName] is one of [englishVoices]' names, or "" for the first British voice. */
+    fun synth(text: String, rate: Float, pitch: Float, voiceName: String = ""): Pcm? {
         val t = tts ?: return null
         if (!awaitReady()) return null
         t.setLanguage(Locale.UK)
-        britishVoice(t)?.let { t.setVoice(it) }
+        pick(voiceName)?.let { t.setVoice(it) }
         t.setSpeechRate(rate)
         t.setPitch(pitch)
         val file = File(context.cacheDir, "say.wav")
@@ -133,6 +170,20 @@ class PhoneVoice(private val context: Context) {
     fun shutdown() {
         tts?.shutdown()
         tts = null
+    }
+
+    companion object {
+        private val ACCENTS = listOf(
+            "GB" to "British", "IE" to "Irish", "AU" to "Australian", "NZ" to "New Zealand",
+            "IN" to "Indian", "ZA" to "South African", "NG" to "Nigerian", "CA" to "Canadian",
+            "US" to "American",
+        )
+
+        fun accentName(country: String): String =
+            ACCENTS.firstOrNull { it.first == country }?.second ?: "English ($country)"
+
+        fun countryOrder(country: String): Int =
+            ACCENTS.indexOfFirst { it.first == country }.let { if (it < 0) 99 else it }
     }
 }
 

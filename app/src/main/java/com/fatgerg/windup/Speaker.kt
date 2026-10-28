@@ -60,7 +60,7 @@ class Speaker(
     @Volatile private var currentTrack: AudioTrack? = null
     @Volatile private var googleFailed = false
 
-    val usingGoogle: Boolean get() = settings.googleKey.isNotBlank() && !googleFailed
+    val usingGoogle: Boolean get() = settings.googleOn && !googleFailed
 
     /** Makes the audio for one piece of text in this character's voice. */
     fun synth(text: String, character: Character): Pcm? {
@@ -74,7 +74,7 @@ class Speaker(
                 googleFailed = true
             }
         }
-        return phone.synth(text, character.speakingRate, character.phonePitch)
+        return phone.synth(text, character.speakingRate, character.phonePitch, settings.phoneVoiceFor(character.id))
     }
 
     /** Lets Google be tried again, for example after the key has been changed. */
