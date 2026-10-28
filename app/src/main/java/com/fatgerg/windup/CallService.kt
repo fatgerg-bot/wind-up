@@ -38,6 +38,8 @@ class CallService : Service() {
     private lateinit var brain: Brain
     private var listener: CallListener? = null
     private var transcriber: Transcriber? = null
+    private val recorder = CallRecorder()
+    private lateinit var monitor: LiveMonitor
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     // One worker, so turns, replies and speech happen strictly one at a time.
@@ -65,6 +67,9 @@ class CallService : Service() {
         phoneVoice = PhoneVoice(this).also { it.init() }
         speaker = Speaker(this, settings, GoogleVoice(settings), phoneVoice) { CallState.add(Who.APP, it) }
         brain = Brain(settings)
+        monitor = LiveMonitor(this)
+        speaker.recorder = recorder
+        speaker.monitor = monitor
         goForeground("Wind-Up ready")
     }
 
@@ -78,6 +83,8 @@ class CallService : Service() {
             ACTION_HANG_UP -> hangUp()
             ACTION_HEAR_VOICE -> intent.getStringExtra(EXTRA_TEXT)?.let { hearVoice(it) }
             ACTION_TEST_TONE -> testTone()
+            ACTION_RECORD -> toggleRecord()
+            ACTION_LISTEN -> toggleListen()
         }
         return START_NOT_STICKY
     }
@@ -156,6 +163,10 @@ class CallService : Service() {
                 CallState.add(Who.APP, "They talked over the character")
             },
             onDiscard = { if (!busy && inCall && !finished) CallState.setStatus(Status.LISTENING) },
+            onFrame = { frame, n ->
+                recorder.addLine(frame, n)
+                monitor.line(frame, n)
+            },
         ).also {
             it.interruptAllowed = cable
             it.muted = true // nothing to hear until they answer
@@ -171,6 +182,7 @@ class CallService : Service() {
         if (p == null || pcm == null || inCall) return
         inCall = true
         goForeground("Prank call in progress")
+        if (settings.autoRecord && !recorder.recording) startRecording()
         scope.launch(worker) {
             val line = Characters.openingLine(p)
             brain.start(Characters.systemPrompt(this@CallService, p), line)
@@ -370,12 +382,71 @@ class CallService : Service() {
             listener?.stop()
             listener = null
             opening = null
+            if (recorder.recording) saveRecording()
+            monitor.stop()
+            CallState.setListening(false)
             if (wasInCall) saveLog()
             releaseWakeLock()
             CallState.setStatus(Status.IDLE)
             CallState.setDetail("")
             withContext(Dispatchers.Main) { stopSelfIfIdle() }
         }
+    }
+
+    // ---- Recording and live listening ------------------------------------------------------
+
+    private fun toggleRecord() {
+        if (recorder.recording) {
+            scope.launch(Dispatchers.IO) { saveRecording() }
+            return
+        }
+        if (listener == null) {
+            CallState.add(Who.APP, "Tap Get ready first. Recording can start any time after that.")
+            return
+        }
+        startRecording()
+    }
+
+    private fun startRecording() {
+        recorder.start()
+        CallState.setRecording(true)
+        CallState.add(Who.APP, "Recording started")
+    }
+
+    @Synchronized
+    private fun saveRecording() {
+        if (!recorder.recording) return
+        val data = recorder.stop()
+        CallState.setRecording(false)
+        if (data == null) {
+            CallState.add(Who.APP, "Recording was too short to keep")
+            return
+        }
+        try {
+            val who = prank?.character?.id?.substringBefore("_") ?: "call"
+            val name = "WindUp-$who-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.UK).format(Date()) + ".wav"
+            val uri = CallRecorder.save(this, data, name)
+            CallState.setLastRecording(uri)
+            CallState.add(Who.APP, "Recording saved in Recordings/Wind-Up as $name")
+        } catch (e: Exception) {
+            CallState.add(Who.APP, "Couldn't save the recording: ${e.message}")
+        }
+    }
+
+    private fun toggleListen() {
+        if (monitor.on) {
+            monitor.stop()
+            CallState.setListening(false)
+            CallState.add(Who.APP, "Stopped listening live")
+            return
+        }
+        val name = monitor.start()
+        if (name == null) {
+            CallState.add(Who.APP, "No Bluetooth headphones connected. Pair them with this phone first.")
+            return
+        }
+        CallState.setListening(true)
+        CallState.add(Who.APP, "Listening live on $name" + if (listener == null) ". You'll hear the call once you tap Get ready." else "")
     }
 
     // ---- Silence on the line ---------------------------------------------------------------
@@ -458,6 +529,10 @@ class CallService : Service() {
         inCall = false
         watchdog?.cancel()
         listener?.stop()
+        if (recorder.recording) saveRecording()
+        monitor.stop()
+        CallState.setListening(false)
+        CallState.setRecording(false)
         releaseWakeLock()
         speaker.shutdown()
         phoneVoice.shutdown()
@@ -479,6 +554,8 @@ class CallService : Service() {
         const val ACTION_HANG_UP = "hang_up"
         const val ACTION_HEAR_VOICE = "hear_voice"
         const val ACTION_TEST_TONE = "tone"
+        const val ACTION_RECORD = "record"
+        const val ACTION_LISTEN = "listen"
         const val EXTRA_TEXT = "text"
 
         fun send(context: Context, action: String, text: String? = null) {

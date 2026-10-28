@@ -45,6 +45,22 @@ object CallState {
     private val _detail = MutableStateFlow("")
     val detail: StateFlow<String> = _detail.asStateFlow()
 
+    /** True while the call is being recorded. */
+    private val _recording = MutableStateFlow(false)
+    val recording: StateFlow<Boolean> = _recording.asStateFlow()
+
+    /** True while the call is playing live to Bluetooth headphones. */
+    private val _listening = MutableStateFlow(false)
+    val listening: StateFlow<Boolean> = _listening.asStateFlow()
+
+    /** The last saved recording, for the Share button. */
+    private val _lastRecording = MutableStateFlow<android.net.Uri?>(null)
+    val lastRecording: StateFlow<android.net.Uri?> = _lastRecording.asStateFlow()
+
+    fun setRecording(v: Boolean) { _recording.value = v }
+    fun setListening(v: Boolean) { _listening.value = v }
+    fun setLastRecording(u: android.net.Uri?) { _lastRecording.value = u }
+
     fun setStatus(s: Status) { _status.value = s }
     fun setLevel(l: Int) { _level.value = l }
     fun setSpeech(v: Boolean) { if (_speech.value != v) _speech.value = v }

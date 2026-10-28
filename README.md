@@ -67,6 +67,12 @@ While a call is running:
 
 **Practise first without the cable:** tap Get ready with nothing plugged in. Wind-Up uses the Pixel's own mic and speaker. Talking over the character is switched off in this mode so it doesn't hear itself.
 
+## Recording and listening live
+
+- **Record** saves both sides of the call as one audio file in `Recordings/Wind-Up` on the phone (`Music/Wind-Up` on older Android). It can start any time after **Get ready**, and stops when you tap it again or tap **Finished**. **Share the last recording** on the main screen sends it to WhatsApp, email and so on. To record every call, turn on **Record every call automatically** in Settings.
+- **Listen on headphones** plays the call live to Bluetooth headphones paired with the Pixel: your friend's side, plus the character as it speaks. The character still goes down the cable to the call phone as normal. Start it on the Ready screen and you'll hear the ringing, so you know the moment they pick up. Bluetooth adds a fraction of a second of delay.
+- Recording a call you're part of, for your own use, is fine in the UK. Ask your friend before you post it anywhere.
+
 ## Getting the levels right
 
 - Watch **Call line level** while your friend talks. It should go green when they speak and grey between sentences. If it stays grey, lower **Talk threshold**; if it's green during silence, raise it.

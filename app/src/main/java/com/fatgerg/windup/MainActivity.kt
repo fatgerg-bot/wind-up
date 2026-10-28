@@ -261,6 +261,18 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth().height(64.dp),
             ) { Text("Get ready", fontSize = 22.sp, color = Plum, fontWeight = FontWeight.Bold) }
 
+            val lastRecording by CallState.lastRecording.collectAsState()
+            lastRecording?.let { uri ->
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = {
+                    val share = Intent(Intent.ACTION_SEND)
+                        .setType("audio/x-wav")
+                        .putExtra(Intent.EXTRA_STREAM, uri)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(Intent.createChooser(share, "Share the prank recording"))
+                }, modifier = Modifier.fillMaxWidth()) { Text("Share the last recording") }
+            }
+
             if (log.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
                 log.takeLast(4).forEach { Text(it.text, color = Muted, fontSize = 13.sp) }
@@ -276,6 +288,8 @@ class MainActivity : ComponentActivity() {
         val log by CallState.log.collectAsState()
         val route by CallState.route.collectAsState()
         val detail by CallState.detail.collectAsState()
+        val recording by CallState.recording.collectAsState()
+        val listening by CallState.listening.collectAsState()
         var sayText by remember { mutableStateOf("") }
         val listState = rememberLazyListState()
         val name = Characters.byId(this@MainActivity, settings.characterId).name
@@ -322,6 +336,19 @@ class MainActivity : ComponentActivity() {
             Status.LISTENING, Status.HEARING, Status.THINKING, Status.SPEAKING ->
                 BigButton("Reveal now", Coral) { send(CallService.ACTION_REVEAL) }
             else -> {}
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { send(CallService.ACTION_RECORD) },
+                colors = ButtonDefaults.buttonColors(containerColor = if (recording) Red else Card),
+                modifier = Modifier.weight(1f),
+            ) { Text(if (recording) "■  Stop recording" else "●  Record", color = Color.White) }
+            Button(
+                onClick = { send(CallService.ACTION_LISTEN) },
+                colors = ButtonDefaults.buttonColors(containerColor = if (listening) Green else Card),
+                modifier = Modifier.weight(1f),
+            ) { Text(if (listening) "Listening live" else "Listen on headphones", color = if (listening) Plum else Color.White, fontSize = 13.sp) }
         }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -381,6 +408,7 @@ class MainActivity : ComponentActivity() {
         var threshold by remember { mutableStateOf(settings.talkThreshold.toString()) }
         var outLevel by remember { mutableStateOf(settings.outputLevel.toString()) }
         var interrupt by remember { mutableStateOf(settings.allowInterrupt) }
+        var autoRecord by remember { mutableStateOf(settings.autoRecord) }
         var interruptLevel by remember { mutableStateOf(settings.interruptThreshold.toString()) }
         var words by remember { mutableStateOf(settings.revealWords) }
 
@@ -393,6 +421,7 @@ class MainActivity : ComponentActivity() {
             threshold.toIntOrNull()?.let { settings.talkThreshold = it.coerceIn(1, 90) }
             outLevel.toIntOrNull()?.let { settings.outputLevel = it.coerceIn(10, 100) }
             settings.allowInterrupt = interrupt
+            settings.autoRecord = autoRecord
             interruptLevel.toIntOrNull()?.let { settings.interruptThreshold = it.coerceIn(1, 90) }
             settings.revealWords = words
             requestBasics()
@@ -441,6 +470,11 @@ class MainActivity : ComponentActivity() {
                 Switch(checked = interrupt, onCheckedChange = { interrupt = it })
             }
             Text("Turn this off if the character keeps cutting itself off.", color = Muted, fontSize = 12.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Record every call automatically", color = Color.White, modifier = Modifier.weight(1f))
+                Switch(checked = autoRecord, onCheckedChange = { autoRecord = it })
+            }
+            Text("Recordings go in Recordings/Wind-Up on the phone.", color = Muted, fontSize = 12.sp)
             Field("How loud they must be to interrupt, 1-90", interruptLevel, { interruptLevel = it }, number = true)
 
             Section("Safety net")

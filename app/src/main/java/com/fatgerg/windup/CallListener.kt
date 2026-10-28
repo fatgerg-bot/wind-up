@@ -26,6 +26,8 @@ class CallListener(
     private val onTurn: (FloatArray) -> Unit,
     private val onBargeIn: () -> Unit,
     private val onDiscard: () -> Unit = {},
+    /** Gets every raw frame of the call line, for the recording and live headphones. */
+    private val onFrame: ((ShortArray, Int) -> Unit)? = null,
 ) {
     @Volatile private var running = false
 
@@ -116,6 +118,7 @@ class CallListener(
                     got += n
                 }
                 if (got < FRAME) continue
+                onFrame?.invoke(buf, FRAME)
                 val samples = FloatArray(FRAME) { buf[it] / 32768f }
                 val level = levelOf(samples)
                 CallState.setLevel(level)

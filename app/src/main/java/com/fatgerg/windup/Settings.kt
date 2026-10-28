@@ -92,6 +92,11 @@ class Settings(context: Context) {
         get() = prefs.getInt("interrupt_threshold", 25)
         set(v) = prefs.edit().putInt("interrupt_threshold", v).apply()
 
+    /** Start recording automatically the moment they answer. */
+    var autoRecord: Boolean
+        get() = prefs.getBoolean("auto_record", false)
+        set(v) = prefs.edit().putBoolean("auto_record", v).apply()
+
     // ---- Safety ----
 
     var revealWords: String

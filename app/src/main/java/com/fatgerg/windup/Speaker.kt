@@ -60,6 +60,12 @@ class Speaker(
     @Volatile private var currentTrack: AudioTrack? = null
     @Volatile private var googleFailed = false
 
+    /** When set, everything the character says is added to the call recording. */
+    @Volatile var recorder: CallRecorder? = null
+
+    /** When set, everything the character says is also played live to your headphones. */
+    @Volatile var monitor: LiveMonitor? = null
+
     val usingGoogle: Boolean get() = settings.googleOn && !googleFailed
 
     /** Makes the audio for one piece of text in this character's voice. */
@@ -109,6 +115,7 @@ class Speaker(
     fun stopNow() {
         interrupted = true
         try { currentTrack?.pause(); currentTrack?.flush() } catch (_: Exception) {}
+        monitor?.cutSpeech()
     }
 
     /** A steady tone for checking the cable and setting the call phone's mic level. */
@@ -123,7 +130,7 @@ class Speaker(
             if (i > n - fade) a *= (n - i) / fade.toFloat()
             (sin(2 * PI * 1000.0 * i / rate) * a * Short.MAX_VALUE).toInt().toShort()
         }
-        play(Pcm(pcm, rate))
+        play(Pcm(pcm, rate), record = false)
     }
 
     fun shutdown() {
@@ -131,8 +138,10 @@ class Speaker(
         synthExec.shutdownNow()
     }
 
-    private fun play(pcm: Pcm) {
+    private fun play(pcm: Pcm, record: Boolean = true) {
         if (pcm.samples.isEmpty()) return
+        val rec = if (record) recorder else null
+        var startAt = 0
         val g = settings.outputLevel.coerceIn(10, 100) / 100f
         val tail = pcm.rate / 10 // 100 ms of silence so the last word isn't clipped
         val data = ShortArray(pcm.samples.size + tail) { i ->
@@ -160,6 +169,8 @@ class Speaker(
         try {
             track.write(data, 0, data.size)
             if (interrupted) return
+            startAt = rec?.position() ?: 0
+            if (record) monitor?.speech(pcm)
             track.play()
             val end = System.currentTimeMillis() + data.size * 1000L / pcm.rate + 300
             while (System.currentTimeMillis() < end) {
@@ -170,6 +181,11 @@ class Speaker(
             }
         } finally {
             currentTrack = null
+            if (rec != null) {
+                // Only what was actually heard goes in the recording, so a cut-off line stays cut off.
+                val played = try { track.playbackHeadPosition } catch (_: Exception) { 0 }
+                rec.addSpeech(startAt, pcm, played.coerceAtMost(pcm.samples.size))
+            }
             try { track.stop() } catch (_: Exception) {}
             track.release()
         }
