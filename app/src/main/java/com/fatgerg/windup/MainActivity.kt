@@ -11,7 +11,10 @@ import android.provider.Settings as AndroidSettings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -116,7 +119,13 @@ class MainActivity : ComponentActivity() {
         val status by CallState.status.collectAsState()
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("WIND-UP", color = Coral, fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                Image(
+                    painter = painterResource(R.drawable.logo_mark),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text("Wind-Up", color = Coral, fontSize = 28.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))
                 TextButton(onClick = onSettings) { Text("Settings", color = Muted) }
             }
@@ -156,7 +165,11 @@ class MainActivity : ComponentActivity() {
                     voice = settings.voiceFor(id)
                 },
             )
-            Text(character.voiceDesign, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                Portrait(character.id, 84)
+                Spacer(Modifier.width(12.dp))
+                Text(character.voiceDesign, color = Muted, fontSize = 13.sp)
+            }
 
             Label("Voice")
             if (settings.googleKey.isBlank()) {
@@ -244,8 +257,10 @@ class MainActivity : ComponentActivity() {
             Modifier.fillMaxWidth().background(Card, RoundedCornerShape(12.dp)).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(26.dp).background(lamp, CircleShape))
-            Spacer(Modifier.width(14.dp))
+            Portrait(settings.characterId, 52)
+            Spacer(Modifier.width(12.dp))
+            Box(Modifier.size(18.dp).background(lamp, CircleShape))
+            Spacer(Modifier.width(10.dp))
             Column {
                 Text(status.label, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 if (detail.isNotEmpty()) Text(detail, color = Muted, fontSize = 13.sp)
@@ -390,6 +405,21 @@ class MainActivity : ComponentActivity() {
     }
 
     // ---- Small pieces ----------------------------------------------------------------------
+
+    /** The character's cartoon, from res/drawable-nodpi/portrait_<id>.png. Nothing if there isn't one. */
+    @Composable
+    private fun Portrait(characterId: String, sizeDp: Int) {
+        val res = remember(characterId) {
+            resources.getIdentifier("portrait_$characterId", "drawable", packageName)
+        }
+        if (res != 0) {
+            Image(
+                painter = painterResource(res),
+                contentDescription = null,
+                modifier = Modifier.size(sizeDp.dp).clip(CircleShape),
+            )
+        }
+    }
 
     @Composable
     private fun BigButton(text: String, colour: Color, onClick: () -> Unit) {

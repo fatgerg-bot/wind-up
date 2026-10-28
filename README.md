@@ -98,6 +98,10 @@ All six live in `app/src/main/assets/characters.json`. Edit that file to change 
 | Inspector Crumb, Garden Gnome Recovery Unit | Algenib (gravelly) |
 | Gary from Total Broadband Solutions | Schedar (even) |
 
+## Artwork
+
+The logo and the six character portraits are SVGs in `art/`. The app uses PNG copies of them in `app/src/main/res/drawable-nodpi/` (`portrait_<character id>.png` and `logo_mark.png`). A new character gets its picture automatically if you add a `portrait_<its id>.png` there.
+
 ## How it's built
 
 - Kotlin and Jetpack Compose, built by GitHub Actions (`.github/workflows/build.yml`), using the same setup as Control.

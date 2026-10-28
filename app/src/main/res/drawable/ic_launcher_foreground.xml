@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Wind-Up mark: a phone handset with a wind-up key and sound waves. Drawn on a 240 grid, scaled into the 66dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- Telephone handset -->
-    <path android:fillColor="#FFC94A"
-        android:pathData="M34,40 C34,36 37,33 41,33 L47,33 C49,33 50,35 49.5,37 L47.5,43 C47,45 45,46 43,45.5 L41.5,45 C41,53 47,62 55,66 L56,64.5 C57,62.7 59,62 61,62.6 L67,64.6 C69,65.2 70,67 69.5,69 L68.5,74 C67.7,77.5 64.5,79 61,78.5 C45,76 32,60 34,40 Z" />
-    <!-- Wind-up key: shaft and two round wings, kept inside the icon safe zone -->
-    <group android:translateX="-13" android:translateY="7">
-    <path android:fillColor="#FF7A59" android:pathData="M63,42 L71,34 L74,37 L66,45 Z" />
-    <path android:fillColor="#FF7A59"
-        android:pathData="M70,26 C74,22 80,22 82,26 C84,28 83,31 81,33 L77,37 L71,31 Z" />
-    <path android:fillColor="#FF7A59"
-        android:pathData="M78,34 C82,30 86,30 88,32 C90,36 89,40 86,42 C82,44 79,43 77,41 L76,40 Z" />
-    <path android:fillColor="#1B1530"
-        android:pathData="M75.5,28.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 M82,36.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    <group android:scaleX="0.44" android:scaleY="0.44" android:translateX="-4" android:translateY="2">
+        <path android:fillColor="#2A2147"
+            android:pathData="M134,120m-88,0a88,88 0 1,0 176,0a88,88 0 1,0 -176,0" />
+        <path android:fillColor="#FFC94A"
+            android:pathData="M66,82 C66,72 74,64 84,64 L100,64 C105,64 108,69 107,74 L102,90 C101,95 96,97 91,96 L87,95 C86,116 102,140 124,151 L126,147 C128,142 133,140 138,141 L154,146 C159,148 162,153 160,158 L157,172 C155,181 147,185 138,184 C96,178 62,136 66,82 Z" />
+        <group android:translateX="112" android:translateY="54">
+            <path android:fillColor="#FF7A59" android:pathData="M14,54 L36,32 L44,40 L22,62 Z" />
+            <path android:fillColor="#FF7A59"
+                android:pathData="M33,22 C42,12 56,12 61,22 C65,28 63,34 58,39 L48,49 L30,31 Z" />
+            <path android:fillColor="#FF7A59"
+                android:pathData="M52,44 C62,34 72,34 77,39 C82,48 80,58 72,63 C63,68 56,66 51,61 L49,59 Z" />
+            <path android:fillColor="#2A2147"
+                android:pathData="M39,26 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 M60,50 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+        </group>
+        <path android:strokeColor="#FFC94A" android:strokeWidth="7" android:strokeLineCap="round"
+            android:fillColor="#00000000"
+            android:pathData="M176,128 Q186,120 184,108 M188,140 Q204,124 200,102" />
     </group>
 </vector>

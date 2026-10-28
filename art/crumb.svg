@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+<defs><clipPath id="c"><circle cx="120" cy="120" r="120"/></clipPath></defs>
+<g clip-path="url(#c)">
+<rect width="240" height="240" fill="#85B7EB"/>
+<circle cx="120" cy="120" r="96" fill="#9DC6F0"/>
+<path d="M30 240 C30 186 72 164 120 164 C168 164 210 186 210 240 Z" fill="#C9A46A"/>
+<path d="M120 170 L74 160 L90 222 Z" fill="#B38E55"/>
+<path d="M120 170 L166 160 L150 222 Z" fill="#B38E55"/>
+<path d="M106 166 L120 240 L134 166 Z" fill="#F4F1EA"/>
+<path d="M115 172 L125 172 L128 230 L120 240 L112 230 Z" fill="#7A2E3A"/>
+<rect x="107" y="146" width="26" height="22" fill="#DDB08C"/>
+<circle cx="78" cy="118" r="10" fill="#DDB08C"/>
+<ellipse cx="120" cy="114" rx="42" ry="47" fill="#EBC3A0"/>
+<path d="M74 90 C74 64 96 50 120 50 C144 50 166 64 166 90 Z" fill="#5A4636"/>
+<rect x="74" y="80" width="92" height="12" fill="#2B1E3F"/>
+<path d="M56 94 C70 86 170 86 184 94 C188 98 184 102 176 100 C150 94 90 94 64 100 C56 102 52 98 56 94 Z" fill="#4A382A"/>
+<path d="M106 54 C112 62 128 62 134 54" stroke="#4A382A" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M90 110 L112 116" stroke="#4A4540" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 106 L130 114" stroke="#4A4540" stroke-width="6" stroke-linecap="round"/>
+<path d="M94 124 L110 124" stroke="#2B1E3F" stroke-width="4" stroke-linecap="round"/>
+<path d="M118 120 C114 132 116 140 124 140" stroke="#C99B80" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path d="M92 150 C98 140 112 140 120 146 C128 140 142 140 148 150 C138 154 130 150 120 152 C110 150 102 154 92 150 Z" fill="#8A8580"/>
+<path d="M112 158 L128 158" stroke="#B9867A" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M164 146 L206 214" stroke="#2A2147" stroke-width="12" stroke-linecap="round"/>
+<path d="M164 146 L206 214" stroke="#8B5E34" stroke-width="7" stroke-linecap="round"/>
+<circle cx="144" cy="124" r="27" fill="#FFFFFF" fill-opacity="0.55"/>
+<circle cx="144" cy="124" r="13" fill="#FFFFFF"/>
+<circle cx="146" cy="126" r="8" fill="#2B1E3F"/>
+<circle cx="149" cy="122" r="2.5" fill="#FFFFFF"/>
+<circle cx="144" cy="124" r="27" fill="none" stroke="#2A2147" stroke-width="7"/>
+<path d="M128 108 Q136 102 144 104" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+</g>
+</svg>
