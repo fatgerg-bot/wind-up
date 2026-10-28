@@ -1,0 +1,93 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  SHERPA_VERSION: "2.0.1"
+  ASR_MODEL: sherpa-onnx-moonshine-base-en-quantized-2026-02-27
+  ASR_FALLBACK: sherpa-onnx-moonshine-tiny-en-quantized-2026-02-27
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Download sherpa-onnx (on-device speech recognition)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p app/libs
+          url="https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/sherpa-onnx-${SHERPA_VERSION}.aar"
+          if ! curl -fsSL -o app/libs/sherpa-onnx.aar "$url"; then
+            echo "v${SHERPA_VERSION} not found, using the latest sherpa-onnx release"
+            tag=$(gh release view --repo k2-fsa/sherpa-onnx --json tagName -q .tagName)
+            ver="${tag#v}"
+            curl -fsSL -o app/libs/sherpa-onnx.aar \
+              "https://github.com/k2-fsa/sherpa-onnx/releases/download/${tag}/sherpa-onnx-${ver}.aar"
+          fi
+          ls -lh app/libs
+          unzip -l app/libs/sherpa-onnx.aar | grep -E "classes.jar|arm64-v8a" || true
+
+      - name: Download speech model
+        run: |
+          mkdir -p model app/src/main/assets/asr
+          base="https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models"
+          if ! curl -fsSL -o model/m.tar.bz2 "$base/${ASR_MODEL}.tar.bz2"; then
+            echo "Base model not found, using the tiny model"
+            curl -fsSL -o model/m.tar.bz2 "$base/${ASR_FALLBACK}.tar.bz2"
+          fi
+          tar -xjf model/m.tar.bz2 -C model
+          for f in encoder_model.ort decoder_model_merged.ort tokens.txt; do
+            src=$(find model -name "$f" | head -1)
+            if [ -z "$src" ]; then echo "Missing $f in the model download"; find model; exit 1; fi
+            cp "$src" app/src/main/assets/asr/
+          done
+          ls -lh app/src/main/assets/asr
+
+      - name: Download voice detector
+        run: |
+          mkdir -p app/src/main/assets/vad
+          curl -fsSL -o app/src/main/assets/vad/silero_vad.onnx \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx
+          ls -lh app/src/main/assets/vad
+
+      - name: Build
+        run: gradle --no-daemon assembleRelease
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/wind-up.apk
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wind-up-apk
+          path: out/wind-up.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Wind-Up build ${{ github.run_number }}
+          make_latest: true
+          files: out/wind-up.apk
+          body: |
+            Download wind-up.apk on the phone and install it.
+            Built from ${{ github.sha }}.

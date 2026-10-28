@@ -1,0 +1,20 @@
+# Build output
+build/
+.gradle/
+*.apk
+*.aab
+
+# Local machine settings (can hold SDK paths or secrets)
+local.properties
+*.env
+secrets.properties
+
+# Downloaded by the GitHub build, not stored in the repo
+app/libs/
+app/src/main/assets/asr/
+app/src/main/assets/vad/
+
+# IDE
+.idea/
+*.iml
+.DS_Store

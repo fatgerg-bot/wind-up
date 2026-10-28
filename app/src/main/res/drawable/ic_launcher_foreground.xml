@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Telephone handset -->
+    <path android:fillColor="#FFC94A"
+        android:pathData="M34,40 C34,36 37,33 41,33 L47,33 C49,33 50,35 49.5,37 L47.5,43 C47,45 45,46 43,45.5 L41.5,45 C41,53 47,62 55,66 L56,64.5 C57,62.7 59,62 61,62.6 L67,64.6 C69,65.2 70,67 69.5,69 L68.5,74 C67.7,77.5 64.5,79 61,78.5 C45,76 32,60 34,40 Z" />
+    <!-- Wind-up key: shaft and two round wings, kept inside the icon safe zone -->
+    <group android:translateX="-13" android:translateY="7">
+    <path android:fillColor="#FF7A59" android:pathData="M63,42 L71,34 L74,37 L66,45 Z" />
+    <path android:fillColor="#FF7A59"
+        android:pathData="M70,26 C74,22 80,22 82,26 C84,28 83,31 81,33 L77,37 L71,31 Z" />
+    <path android:fillColor="#FF7A59"
+        android:pathData="M78,34 C82,30 86,30 88,32 C90,36 89,40 86,42 C82,44 79,43 77,41 L76,40 Z" />
+    <path android:fillColor="#1B1530"
+        android:pathData="M75.5,28.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 M82,36.5 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    </group>
+</vector>
